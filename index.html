@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>יקר או זול? - מבחן הסופר</title>
+    <meta property="og:title" content="יקר או זול? 🛒 בדקו אם אתם פראיירים בסופר!">
+    <meta property="og:description" content="חושבים שאתם יודעים כמה עולה הכל? היכנסו למשחק, נחשו את המחירים ונסו לשבור את השיא! 🏆">
+    
+    <style>
+        /* --- עיצוב (CSS) מובנה --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; text-align: center; direction: rtl; margin: 0; padding: 20px; }
+        .game-container { max-width: 600px; margin: 10px auto; background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; }
+        .stats-bar { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 20px; width: 100%; }
+        .stat-box { background: #f8f9fa; border-radius: 15px; padding: 8px 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex: 1; width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+        .main-stat { font-size: 1.3rem; font-weight: 800; color: #333; line-height: 1.1; }
+        .sub-stat { font-size: 0.75rem; color: #777; margin-top: 2px; font-weight: bold; white-space: nowrap; }
+        #timer { color: #d9534f; } #score { color: #28a745; }
+        h1 { margin-bottom: 30px; color: #333; font-size: 1.8rem; }
+        .products-area { display: flex; justify-content: space-between; align-items: stretch; margin-bottom: 30px; gap: 10px; }
+        .product { flex: 1; cursor: pointer; border: 2px solid #eee; padding: 10px; border-radius: 15px; transition: all 0.2s; background: white; display: flex; flex-direction: column; justify-content: space-between; }
+        .product:active { transform: scale(0.96); }
+        .product img { width: 100%; height: 120px; object-fit: contain; margin-bottom: 10px; }
+        .product h2 { font-size: 1rem; margin: 0; line-height: 1.3; }
+        .price-reveal { font-weight: bold; font-size: 1.1rem; margin-top: 10px; color: #555; min-height: 25px; }
+        .vs { display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; color: #bbb; margin: 0 2px; }
+        .message { margin-top: 20px; font-weight: bold; font-size: 1.2rem; min-height: 30px; }
+        .correct-choice { background-color: #d4edda !important; border-color: #28a745 !important; }
+        .wrong-choice { background-color: #f8d7da !important; border-color: #dc3545 !important; animation: shake 0.4s; }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
+        
+        /* מודל סיום */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; padding: 0; }
+        .modal-content { background-color: #ffffff; width: 85%; max-width: 320px; padding: 30px 20px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; position: relative; box-sizing: border-box; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .modal-content h2 { margin-top: 0; color: #333; font-size: 1.5rem; }
+        .rank-box { background-color: #f0f8ff; border: 2px dashed #007bff; padding: 15px; border-radius: 15px; margin: 20px 0; }
+        #rankTitle { color: #007bff; margin: 8px 0; font-size: 1.4rem; font-weight: 800; }
+        #rankDescription { color: #555; font-size: 0.95rem; line-height: 1.3; margin: 0; }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        /* כפתורים */
+        button { border: none; font-size: 1.1rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; padding: 12px 0; margin-top: 10px; transition: transform 0.1s; }
+        button:active { transform: scale(0.98); }
+        .modal-content button { background-color: #28a745; color: white; }
+        .share-btn { background-color: #25D366 !important; color: white !important; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .share-btn:hover { background-color: #128C7E !important; }
+        .community-box { margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
+        .community-box p { font-size: 0.9rem; color: #666; margin-bottom: 10px; }
+        .community-btn { display: block; background-color: #007bff; color: white; text-decoration: none; padding: 12px 0; border-radius: 50px; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 6px rgba(0,123,255,0.2); transition: transform 0.1s; }
+        .community-btn:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        
+        <div class="stats-bar">
+            <div class="stat-box">
+                <div class="main-stat">🏆 <span id="score">0</span></div>
+                <div class="sub-stat">שיא: <span id="highScore">0</span></div>
+            </div>
+            <div class="stat-box">
+                <div class="sub-stat">שאלה</div>
+                <div class="main-stat"><span id="questionCount">1</span>/10</div>
+            </div>
+            <div class="stat-box">
+                <div class="main-stat">⏳ <span id="timer">60</span></div>
+            </div>
+        </div>
+        
+        <h1>מה יותר יקר?</h1>
+        
+        <div class="products-area">
+            <div class="product" id="product1" onclick="checkAnswer(1)">
+                <img src="" alt="מוצר 1" id="img1">
+                <h2 id="name1">מוצר 1</h2>
+                <div class="price-reveal" id="price1"></div>
+            </div>
+            <div class="vs">VS</div>
+            <div class="product" id="product2" onclick="checkAnswer(2)">
+                <img src="" alt="מוצר 2" id="img2">
+                <h2 id="name2">מוצר 2</h2>
+                <div class="price-reveal" id="price2"></div>
+            </div>
+        </div>
+
+        <div id="message" class="message">טוען משחק...</div>
+
+        <div style="margin-top: 30px; font-size: 14px; color: #666;">
+            נהניתם? 
+            <a href="https://links.payboxapp.com/lKt7mRiph0b" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">
+                קנו לי קפה ☕
+            </a> 
+            כדי שאוכל להוסיף עוד מוצרים!
+        </div>
+    </div>
+
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <h2>🏁 המשחק נגמר!</h2>
+            <p>ענית נכון על <span id="finalScore">0</span> מתוך 10</p>
+            
+            <button class="share-btn" onclick="shareResult()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 20.16C10.57 20.16 9.12 19.76 7.85 19L7.55 18.82L4.43 19.64L5.26 16.58L5.08 16.29C4.27 15.02 3.84 13.48 3.84 11.91C3.84 7.39 7.52 3.71 12.05 3.71C14.25 3.71 16.31 4.57 17.87 6.12C19.42 7.68 20.28 9.74 20.28 11.93C20.28 16.45 16.6 20.16 12.05 20.16ZM16.61 14.9C16.36 14.78 15.14 14.18 14.91 14.1C14.69 14.02 14.53 13.98 14.36 14.22C14.2 14.47 13.72 15.03 13.58 15.2C13.43 15.36 13.29 15.38 13.04 15.26C12.79 15.14 11.99 14.88 11.03 14.03C10.29 13.37 9.79 12.56 9.54 12.31C9.29 12.19 9.51 11.96 9.64 11.84C9.75 11.72 9.89 11.54 10.02 11.38C10.14 11.22 10.18 11.1 10.26 10.94C10.35 10.78 10.31 10.66 10.25 10.53C10.18 10.41 9.77 9.4 9.6 9C9.43 8.6 9.27 8.66 9.12 8.66C8.98 8.66 8.81 8.66 8.65 8.66C8.48 8.66 8.2 8.72 7.97 8.97C7.74 9.22 7.1 9.82 7.1 11.04C7.1 12.27 7.99 13.45 8.12 13.62C8.24 13.78 9.87 16.3 12.37 17.38C12.97 17.63 13.43 17.79 13.8 17.9C14.41 18.1 14.97 18.06 15.41 18C15.91 17.93 16.94 17.38 17.15 16.78C17.36 16.18 17.36 15.66 17.3 15.56C17.23 15.45 17.07 15.42 16.82 15.29L16.61 14.9Z"/>
+                </svg>
+                שתף עם משפחה וחברים
+            </button>
+
+            <div class="rank-box">
+                <p>התואר שלך:</p>
+                <h1 id="rankTitle"></h1>
+                <p id="rankDescription"></p>
+            </div>
+
+            <div class="community-box">
+                <p>רוצים את המבצעים הכי שווים לפני כולם?</p>
+                <a href="https://chat.whatsapp.com/LVQmo35fMQRJ1YnuR7UxuC" target="_blank" class="community-btn">
+                    💬 הצטרפו לקבוצה השקטה שלנו
+                </a>
+            </div>
+
+            <button onclick="restartGame()" style="margin-top: 20px;">🔄 נסה שוב לשפר ציון</button>
+        </div>
+    </div>
+
+    <script>
+        // --- רשימת המוצרים ---
+        const products = [
+            { name: "חלב 1 ליטר (קרטון)", price: 6.80, image: "https://boker.co.il/userfiles/web_pages/picture_65.webp" },
+            { name: "קוטג' 5%", price: 5.90, image: "https://www.tnuva.co.il/wp-content/uploads/2024/02/%E2%80%8F%E2%80%8F%D7%92%D7%92%D7%A9%D7%93%D7%9C%D7%9B%D7%99%D7%93%D7%94.png" },
+            { name: "גבינה צהובה (200 גרם)", price: 16.90, image: "https://chen-chesed.com/wp-content/uploads/2020/12/%D7%A6%D7%94%D7%95%D7%91%D7%94-%D7%9E%D7%95%D7%A4%D7%97%D7%AA%D7%AA-%D7%A9%D7%95%D7%9E%D7%9F-15.png" },
+            { name: "ביצים L (תבנית 12)", price: 13.90, image: "https://www.eggsunlimited.com/wp-content/uploads/2024/07/Ziba%20Photo%20Video%20-%20Gabrielle%20Ulnick%20-%2003-573x431.png" },
+            { name: "חמאה 100 גרם", price: 8.40, image: "https://res.cloudinary.com/shufersal/image/upload/f_auto,q_auto/v1551800922/prod/product_images/products_zoom/TTX56_Z_P_7290014758544_1.png" },
+            { name: "מעדן שוקולד עם קצפת", price: 3.20, image: "https://bigstore-online.co.il/wp-content/uploads/2020/04/ZMW36_L_P_72940761_1.png" },
+            { name: "יוגורט טבעי", price: 4.50, image: "https://www.muller-israel.co.il/on/demandware.static/-/Sites-muller-master-catalog/default/dw6d877bd6/images/Muller%20BIO/%D7%99%D7%95%D7%92%D7%95%D7%A8%D7%98%20%D7%91%D7%99%D7%95%202.8%20%D7%A9%D7%95%D7%9E%D7%9F/2.8bioPDP.png" },
+            { name: "קילו עגבניות", price: 6.90, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Tomato_je.jpg/640px-Tomato_je.jpg" },
+            { name: "קילו מלפפונים", price: 4.90, image: "https://tari-tari.co.il/wp-content/uploads/2021/02/%D7%9E%D7%9C%D7%A4%D7%A4%D7%95%D7%9F-1.png" },
+            { name: "קילו בננות", price: 6.90, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Banana_and_cross_section.jpg/640px-Banana_and_cross_section.jpg" },
+            { name: "קילו תפוחים", price: 10.90, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/640px-Red_Apple.jpg" },
+            { name: "מארז תותים", price: 19.90, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/PerfectStrawberry.jpg/640px-PerfectStrawberry.jpg" },
+            { name: "פסטה (500 גרם)", price: 5.90, image: "https://yastatic.net/avatars/get-grocery-goods/2750890/518355ce-7f03-4dc8-a56b-2653969040b1/464x464-origin" },
+            { name: "אורז לבן 1 ק\"ג", price: 9.90, image: "https://res.cloudinary.com/shufersal/image/upload/f_auto,q_auto/v1551800922/prod/product_images/products_zoom/ZTJ14_Z_P_211442_1.png" },
+            { name: "קמח לבן 1 ק\"ג", price: 3.90, image: "https://d3m9l0v76dty0.cloudfront.net/system/photos/12074937/large/2edc4e37d4cedb709985ca9977507aa5.png" },
+            { name: "סוכר לבן 1 ק\"ג", price: 4.50, image: "https://all2office.co.il/wp-content/uploads/2017/10/%D7%A1%D7%95%D7%9B%D7%A8-%D7%91%D7%A6%D7%A0%D7%A6%D7%A0%D7%AA.png" },
+            { name: "שימורי טונה", price: 26.90, image: "https://res.cloudinary.com/shufersal/image/upload/f_auto,q_auto/v1551800922/prod/product_images/products_large/NNG60_L_P_7290108504699_1.png" },
+            { name: "קטשופ", price: 12.90, image: "https://www.agmfood.co.il/wp-content/uploads/2021/12/70632.jpg" },
+            { name: "שמן זית 750 מ\"ל", price: 39.90, image: "https://shakedtavor.co.il/wp-content/uploads/2026/01/%D7%A9%D7%9E%D7%9F-%D7%96%D7%99%D7%AA-750-%D7%9E%D7%9C.png" },
+            { name: "חטיף בוטנים (במבה)", price: 4.50, image: "https://blupenguin.co.il/wp-content/uploads/2024/10/%D7%91%D7%9E%D7%91%D7%94-%D7%90%D7%A1%D7%9D-%D7%A7%D7%98%D7%9F.png" },
+            { name: "שוקולד חלב (חבילה)", price: 5.50, image: "https://www.einstein-online.co.il/ProductsImages/thumbs/I132806_227201922421_400_400.png" },
+            { name: "ממרח אגוזים (נוטלה)", price: 14.90, image: "https://www.nutella.com/il/sites/nutella20_il/files/2021-05/jar-750g.png?t=1766482127" },
+            { name: "עוגיות סנדוויץ' (אוראו)", price: 6.90, image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Oreo-Two-Cookies.jpg/640px-Oreo-Two-Cookies.jpg" },
+            { name: "דגני בוקר (קורנפלקס)", price: 19.90, image: "https://www.telma-cereals.co.il/wp-content/uploads/2020/03/%D7%90%D7%9C%D7%95%D7%A4%D7%99%D7%9D-850-%D7%92%D7%A8%D7%9D-167x167.png" },
+            { name: "גלידה על מקל", price: 11.00, image: "https://glidatstrauss.co.il/wp-content/uploads/2018/07/3-25-6_178x180_6-178x180.png" },
+            { name: "קוקה קולה 1.5 ליטר", price: 7.90, image: "https://freepngimg.com/thumb/coke/1-2-coca-cola-png-clipart.png" },
+            { name: "שישיית מים מינרלים", price: 12.00, image: "https://all2office.co.il/wp-content/uploads/2018/12/%D7%9E%D7%99%D7%9D-%D7%9E%D7%99%D7%A0%D7%99%D7%A8%D7%9C%D7%99%D7%99%D7%9D-%D7%9C%D7%99%D7%98%D7%A8-%D7%95%D7%97%D7%A6%D7%99.png" },
+            { name: "קפה נמס (צנצנת)", price: 34.90, image: "https://www.nescafe.com/il/sites/default/files/2023-09/132431_7290000072753_front-Recovered%20%281%29.png" },
+            { name: "נייר טואלט (חבילה)", price: 39.90, image: "https://yastatic.net/avatars/get-grocery-goods/2750890/35e59824-2b5a-4d4b-a833-b1cad88e9641/464x464-origin" },
+            { name: "נוזל כלים", price: 11.90, image: "https://all2office.co.il/wp-content/uploads/2024/02/%D7%A4%D7%90%D7%A8%D7%99.png" },
+            { name: "כריות דגנים", price: 28.90, image: "https://www.telma-cereals.co.il/wp-content/uploads/2016/05/410x655_children_11-1.png" }
+        ];
+
+        let score = 0;
+        let highScore = localStorage.getItem('supermarketHighScore') || 0;
+        let roundsPlayed = 0;
+        const MAX_ROUNDS = 10; 
+        let timeLeft = 60;
+        let timerInterval;
+        let isGameActive = false;
+        let currentProduct1, currentProduct2;
+        let finalRankTitle = "";
+
+        function initGame() {
+            score = 0;
+            roundsPlayed = 0;
+            timeLeft = 60;
+            isGameActive = true;
+            
+            document.getElementById("score").innerText = score;
+            document.getElementById("highScore").innerText = highScore;
+            document.getElementById("questionCount").innerText = 1;
+            document.getElementById("timer").innerText = timeLeft;
+            document.getElementById("gameOverModal").style.display = "none";
+            document.getElementById("message").innerText = "בחר מוצר כדי להתחיל";
+            document.getElementById("message").style.color = "black";
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            startRound();
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            document.getElementById("timer").innerText = timeLeft;
+            if (timeLeft <= 0) endGame();
+        }
+
+        function startRound() {
+            if (roundsPlayed >= MAX_ROUNDS) {
+                endGame();
+                return;
+            }
+
+            document.getElementById("questionCount").innerText = roundsPlayed + 1;
+            document.getElementById("price1").innerText = "";
+            document.getElementById("price2").innerText = "";
+            
+            document.getElementById("product1").className = "product";
+            document.getElementById("product2").className = "product";
+            
+            // טקסט הנעה לפעולה עם אימוג'י מתוקן שמצביע למעלה
+            document.getElementById("message").innerText = "לחצו על המוצר היקר יותר 👆";
+            document.getElementById("message").style.color = "black";
+
+            // הגרלה בטוחה
+            let index1 = Math.floor(Math.random() * products.length);
+            let index2 = Math.floor(Math.random() * products.length);
+            
+            while (index1 === index2) {
+                index2 = Math.floor(Math.random() * products.length);
+            }
+
+            currentProduct1 = products[index1];
+            currentProduct2 = products[index2];
+
+            // בדיקה שהמוצרים תקינים
+            if (!currentProduct1 || !currentProduct2) {
+                startRound(); 
+                return;
+            }
+
+            document.getElementById("name1").innerText = currentProduct1.name;
+            document.getElementById("img1").src = currentProduct1.image;
+            document.getElementById("img1").onerror = function() { this.src = 'https://via.placeholder.com/150?text=אין+תמונה'; };
+            
+            document.getElementById("name2").innerText = currentProduct2.name;
+            document.getElementById("img2").src = currentProduct2.image;
+            document.getElementById("img2").onerror = function() { this.src = 'https://via.placeholder.com/150?text=אין+תמונה'; };
+        }
+
+        function checkAnswer(choice) {
+            if (!isGameActive) return;
+            if (document.getElementById("price1").innerText !== "") return;
+
+            document.getElementById("price1").innerText = "₪" + currentProduct1.price.toFixed(2);
+            document.getElementById("price2").innerText = "₪" + currentProduct2.price.toFixed(2);
+
+            let isCorrect = false;
+            if (choice === 1 && currentProduct1.price >= currentProduct2.price) isCorrect = true;
+            else if (choice === 2 && currentProduct2.price >= currentProduct1.price) isCorrect = true;
+
+            if (isCorrect) {
+                score++;
+                document.getElementById("score").innerText = score;
+                document.getElementById("message").innerText = "נכון! 👌";
+                document.getElementById("message").style.color = "green";
+                document.getElementById("product" + choice).classList.add("correct-choice");
+            } else {
+                document.getElementById("message").innerText = "טעות! ❌";
+                document.getElementById("message").style.color = "red";
+                document.getElementById("product" + choice).classList.add("wrong-choice");
+            }
+
+            roundsPlayed++;
+            setTimeout(startRound, 1500);
+        }
+
+        function endGame() {
+            isGameActive = false;
+            clearInterval(timerInterval);
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('supermarketHighScore', highScore);
+            }
+            
+            document.getElementById("finalScore").innerText = score;
+            const rankData = getRank(score);
+            finalRankTitle = rankData.title; 
+            
+            document.getElementById("rankTitle").innerText = rankData.title;
+            document.getElementById("rankDescription").innerText = rankData.desc;
+            
+            document.getElementById("gameOverModal").style.display = "flex";
+        }
+
+        function getRank(finalScore) {
+            if (finalScore <= 3) return { title: "פראייר של הסופר 🤦‍♂️", desc: "דחוף לעשות השוואת מחירים!" };
+            else if (finalScore <= 7) return { title: "קונה ממוצע 🛒", desc: "לא רע, אבל יש מקום לשיפור." };
+            else return { title: "החסכן הגאון! 👑", desc: "כל הכבוד! אתה שולט במחירים." };
+        }
+
+        function shareResult() {
+            const text = `הצלחתי לזהות ${score} מתוך 10 מחירים במשחק הסופר! וקיבלתי את התואר: ${finalRankTitle}. נראה אתכם מנצחים אותי:`;
+            const url = window.location.href; 
+            window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, '_blank');
+        }
+
+        function restartGame() {
+            initGame();
+        }
+
+        // הפעלה בטוחה
+        window.onload = initGame;
+    </script>
+</body>
+</html>
